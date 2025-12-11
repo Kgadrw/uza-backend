@@ -1,6 +1,5 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimiter');
 const {
   register,
   login,
@@ -123,7 +122,7 @@ const router = express.Router();
  *       401:
  *         description: Invalid credentials
  */
-router.post('/register', authLimiter, registerValidation, validate, register);
+router.post('/register', registerValidation, validate, register);
 
 /**
  * @swagger
@@ -148,7 +147,7 @@ router.post('/register', authLimiter, registerValidation, validate, register);
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/login', authLimiter, loginValidation, validate, login);
+router.post('/login', loginValidation, validate, login);
 router.post('/refresh', refreshToken);
 
 /**

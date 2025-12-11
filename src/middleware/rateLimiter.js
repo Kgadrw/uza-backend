@@ -9,12 +9,14 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Strict rate limiter for auth endpoints
+// Strict rate limiter for auth endpoints - disabled for better UX
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 1000, // Very high limit - effectively no limit
   message: 'Too many authentication attempts, please try again later.',
   skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Export rate limiter
