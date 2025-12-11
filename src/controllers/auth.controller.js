@@ -97,7 +97,11 @@ const login = async (req, res) => {
     }, 'Login successful');
   } catch (error) {
     logger.error('Login error:', error);
-    return errorResponse(res, 'Login failed', 500);
+    // Provide more specific error message in development
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? `Login failed: ${error.message}` 
+      : 'Login failed. Please try again or contact support if the problem persists.';
+    return errorResponse(res, errorMessage, 500);
   }
 };
 
