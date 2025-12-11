@@ -3,6 +3,11 @@ const { authenticate, authorize } = require('../middleware/auth');
 const { apiLimiter, uploadLimiter } = require('../middleware/rateLimiter');
 const {
   getDashboardOverview,
+  getProjects,
+  getProjectById,
+  createProject,
+  updateProject,
+  deleteProject,
   getDonors,
   getFundingRequests,
   createFundingRequest,
@@ -38,6 +43,121 @@ router.use(authorize('beneficiary'));
  *         description: Dashboard overview retrieved successfully
  */
 router.get('/dashboard/overview', apiLimiter, getDashboardOverview);
+
+/**
+ * @swagger
+ * /api/v1/beneficiary/projects:
+ *   get:
+ *     summary: Get beneficiary's projects
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Projects retrieved successfully
+ *   post:
+ *     summary: Create a new project
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - description
+ *               - category
+ *               - location
+ *               - fundingGoal
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *                 enum: [Agriculture, Livestock, Aquaculture, Beekeeping, Other]
+ *               location:
+ *                 type: string
+ *               fundingGoal:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Project created successfully
+ */
+router.get('/projects', apiLimiter, getProjects);
+router.post('/projects', apiLimiter, createProject);
+
+/**
+ * @swagger
+ * /api/v1/beneficiary/projects/{id}:
+ *   get:
+ *     summary: Get a specific project by ID
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project retrieved successfully
+ *   put:
+ *     summary: Update a project
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *                 enum: [Agriculture, Livestock, Aquaculture, Beekeeping, Other]
+ *               location:
+ *                 type: string
+ *               fundingGoal:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Project updated successfully
+ *   delete:
+ *     summary: Delete a project
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project deleted successfully
+ */
+router.get('/projects/:id', apiLimiter, getProjectById);
+router.put('/projects/:id', apiLimiter, updateProject);
+router.delete('/projects/:id', apiLimiter, deleteProject);
 
 /**
  * @swagger

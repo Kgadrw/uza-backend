@@ -58,6 +58,207 @@ const getDashboardOverview = async (req, res) => {
   }
 };
 
+const getProjects = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page, limit, skip, sort } = getPaginationParams(req);
+    const { search, status, category } = req.query;
+
+    const query = { beneficiary: userId };
+    if (status && status !== 'all') query.status = status;
+    if (category) query.category = category;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const projects = await Project.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Project.countDocuments(query);
+
+    return paginatedResponse(
+      res,
+      projects,
+      getPaginationMeta(page, limit, total),
+      'Projects retrieved successfully'
+    );
+  } catch (error) {
+    logger.error('Get projects error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve projects',
+    });
+  }
+};
+
+const createProject = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { title, description, category, location, fundingGoal } = req.body;
+
+    // Validate required fields
+    if (!title || !description || !category || !location || !fundingGoal) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required',
+      });
+    }
+
+    // Validate category
+    const validCategories = ['Agriculture', 'Livestock', 'Aquaculture', 'Beekeeping', 'Other'];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid category',
+      });
+    }
+
+    // Create project
+    const project = await Project.create({
+      title,
+      description,
+      category,
+      location,
+      fundingGoal: Number(fundingGoal),
+      beneficiary: userId,
+      status: 'pending',
+    });
+
+    return successResponse(
+      res,
+      { project },
+      'Project created successfully',
+      201
+    );
+  } catch (error) {
+    logger.error('Create project error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create project',
+    });
+  }
+};
+
+const updateProject = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+    const { title, description, category, location, fundingGoal } = req.body;
+
+    // Verify project belongs to user
+    const project = await Project.findOne({ _id: id, beneficiary: userId });
+    if (!project) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project not found or access denied',
+      });
+    }
+
+    // Validate category if provided
+    if (category) {
+      const validCategories = ['Agriculture', 'Livestock', 'Aquaculture', 'Beekeeping', 'Other'];
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid category',
+        });
+      }
+      project.category = category;
+    }
+
+    // Update fields
+    if (title) project.title = title;
+    if (description) project.description = description;
+    if (location) project.location = location;
+    if (fundingGoal) project.fundingGoal = Number(fundingGoal);
+
+    await project.save();
+
+    return successResponse(
+      res,
+      { project },
+      'Project updated successfully'
+    );
+  } catch (error) {
+    logger.error('Update project error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update project',
+    });
+  }
+};
+
+const deleteProject = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+
+    // Verify project belongs to user
+    const project = await Project.findOne({ _id: id, beneficiary: userId });
+    if (!project) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project not found or access denied',
+      });
+    }
+
+    // Only allow deletion of pending projects
+    if (project.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only pending projects can be deleted',
+      });
+    }
+
+    await Project.findByIdAndDelete(id);
+
+    return successResponse(
+      res,
+      null,
+      'Project deleted successfully'
+    );
+  } catch (error) {
+    logger.error('Delete project error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete project',
+    });
+  }
+};
+
+const getProjectById = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+
+    // Verify project belongs to user
+    const project = await Project.findOne({ _id: id, beneficiary: userId });
+    if (!project) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project not found or access denied',
+      });
+    }
+
+    return successResponse(
+      res,
+      { project },
+      'Project retrieved successfully'
+    );
+  } catch (error) {
+    logger.error('Get project by id error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve project',
+    });
+  }
+};
+
 const getDonors = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -361,6 +562,11 @@ const getReports = {
 
 module.exports = {
   getDashboardOverview,
+  getProjects,
+  getProjectById,
+  createProject,
+  updateProject,
+  deleteProject,
   getDonors,
   getFundingRequests,
   createFundingRequest,
