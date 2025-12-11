@@ -1,5 +1,8 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
+// Always use deployed URL - never localhost
+const DEPLOYED_URL = 'https://uza-backend.onrender.com';
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -16,15 +19,9 @@ const options = {
       },
     },
     servers: [
-      // Production/Deployed server (priority)
-      ...(process.env.BACKEND_URL && process.env.BACKEND_URL !== 'http://localhost:5000' ? [{
-        url: process.env.BACKEND_URL,
-        description: 'Deployed/Production server',
-      }] : []),
-      // Local server (fallback or secondary option)
       {
-        url: 'http://localhost:5000',
-        description: 'Local development server',
+        url: DEPLOYED_URL,
+        description: 'Deployed server',
       },
     ],
     components: {

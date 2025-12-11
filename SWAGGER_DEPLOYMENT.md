@@ -1,31 +1,25 @@
 # Swagger Deployment Configuration
 
-## Using Deployed Server in Swagger
+## Using Only Deployed Server in Swagger
 
-Swagger is configured to automatically use your deployed server URL when available.
+Swagger is configured to **ONLY** show your deployed server URL. Localhost is **NOT** included.
 
 ## Configuration
 
-### Environment Variable
+### Required: Set BACKEND_URL
 
-Set `BACKEND_URL` in your `.env` file to your deployed backend URL:
+You **MUST** set `BACKEND_URL` in your `.env` file to your deployed backend URL:
 
 ```env
-# For Production/Deployment
-BACKEND_URL=https://your-deployed-backend-url.com
-
-# For Local Development
-BACKEND_URL=http://localhost:5000
+# REQUIRED - Your deployed backend URL
+BACKEND_URL=https://uza-backend.onrender.com
 ```
 
-### How It Works
+### Important Notes
 
-1. **If `BACKEND_URL` is set and not localhost:**
-   - Swagger will use the deployed URL as the primary server
-   - Localhost will be available as a secondary option
-
-2. **If `BACKEND_URL` is localhost or not set:**
-   - Swagger will default to localhost
+⚠️ **Localhost is NOT shown** - Swagger will only display the deployed server URL
+⚠️ **BACKEND_URL is required** - If not set, it defaults to `https://api.uzaempower.com`
+⚠️ **No fallback** - There's no localhost option in Swagger UI
 
 ## Example Configurations
 
@@ -33,109 +27,90 @@ BACKEND_URL=http://localhost:5000
 
 ```env
 NODE_ENV=production
-BACKEND_URL=https://api.uzaempower.com
+BACKEND_URL=https://uza-backend.onrender.com
 ```
 
 Swagger will show:
-- **Primary**: `https://api.uzaempower.com` (Deployed/Production server)
-- **Secondary**: `http://localhost:5000` (Local development server)
+- **Only**: `https://uza-backend.onrender.com` (Deployed server)
 
-### Local Development
-
-```env
-NODE_ENV=development
-BACKEND_URL=http://localhost:5000
-```
-
-Swagger will show:
-- **Primary**: `http://localhost:5000` (Local development server)
-
-### Mixed (Development with Production API)
+### Vercel Deployment
 
 ```env
-NODE_ENV=development
-BACKEND_URL=https://api.uzaempower.com
+BACKEND_URL=https://uzaempower-backend.vercel.app
 ```
 
-Swagger will show:
-- **Primary**: `https://api.uzaempower.com` (Deployed/Production server)
-- **Secondary**: `http://localhost:5000` (Local development server)
-
-## Deployment Platforms
-
-### Vercel
+### Railway Deployment
 
 ```env
-BACKEND_URL=https://your-app.vercel.app
+BACKEND_URL=https://uzaempower-backend.railway.app
 ```
 
-### Railway
+### Render Deployment
 
 ```env
-BACKEND_URL=https://your-app.railway.app
+BACKEND_URL=https://uzaempower-backend.onrender.com
 ```
 
-### Render
+### Render Deployment (Current)
 
 ```env
-BACKEND_URL=https://your-app.onrender.com
+BACKEND_URL=https://uza-backend.onrender.com
 ```
 
-### AWS/EC2
+## Setup Instructions
 
-```env
-BACKEND_URL=https://api.yourdomain.com
-```
+1. **Update your `.env` file:**
+   ```env
+   BACKEND_URL=https://your-actual-deployed-url.com
+   ```
 
-### DigitalOcean
+2. **Restart your server:**
+   ```bash
+   npm run dev
+   ```
 
-```env
-BACKEND_URL=https://your-app.ondigitalocean.app
-```
+3. **Open Swagger UI:**
+   ```
+   http://localhost:5000/api-docs
+   ```
+
+4. **Verify:**
+   - Check the server dropdown at the top
+   - You should see **ONLY** your deployed URL
+   - No localhost option should appear
 
 ## Verification
 
 After setting `BACKEND_URL`:
 
-1. **Restart your server:**
-   ```bash
-   npm run dev
-   ```
-
-2. **Open Swagger UI:**
-   ```
-   http://localhost:5000/api-docs
-   ```
-
-3. **Check the server dropdown** at the top of Swagger UI
-   - You should see your deployed URL listed
-   - Select it to use the deployed server
-
-4. **Test an endpoint:**
-   - The API calls will go to your deployed server
-   - Check the network tab to verify the URL
-
-## Important Notes
-
-⚠️ **CORS Configuration**: Make sure your deployed backend allows requests from where Swagger is hosted
-
-⚠️ **HTTPS**: If your deployed server uses HTTPS, make sure `BACKEND_URL` uses `https://`
-
-⚠️ **Authentication**: Tokens from localhost and deployed server are separate - you'll need to login again for the deployed server
+1. Open Swagger: `http://localhost:5000/api-docs`
+2. Look at the top - you should see your deployed URL
+3. Test an endpoint - it should call your deployed server
+4. Check browser network tab to confirm the URL
 
 ## Troubleshooting
 
-**Swagger still showing localhost?**
-- Check that `BACKEND_URL` is set in `.env`
-- Restart the server after changing `.env`
-- Verify the URL format is correct (include `http://` or `https://`)
+**Still seeing localhost?**
+- Make sure `BACKEND_URL` is set in `.env`
+- Restart the server completely
+- Clear browser cache
+- Check that the URL doesn't contain `localhost`
 
 **API calls failing?**
+- Verify your deployed server is accessible
 - Check CORS settings on deployed server
-- Verify the deployed server is accessible
-- Check network/firewall settings
+- Ensure the URL is correct (include `https://`)
 
-**Want to remove localhost option?**
-- Edit `backend/src/config/swagger.js`
-- Remove the localhost server entry from the `servers` array
+**Want to test locally?**
+- You can still run the server locally
+- But Swagger will point to your deployed URL
+- To test local APIs, use Postman or curl directly
 
+## Default Behavior
+
+If `BACKEND_URL` is not set, Swagger defaults to:
+```
+https://uza-backend.onrender.com
+```
+
+**Your deployed URL is already configured!** Just make sure `BACKEND_URL` is set in your `.env` file.
