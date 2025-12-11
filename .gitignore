@@ -1,10 +1,10 @@
-# Dependencies
+# Backend Dependencies
 node_modules/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Environment variables
+# Backend Environment variables
 .env
 .env.local
 .env.development.local
@@ -12,7 +12,7 @@ pnpm-lock.yaml
 .env.production.local
 .env*.local
 
-# Logs
+# Backend Logs
 logs/
 *.log
 npm-debug.log*
@@ -21,7 +21,7 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# OS
+# Backend OS
 .DS_Store
 .DS_Store?
 ._*
@@ -31,7 +31,7 @@ ehthumbs.db
 Thumbs.db
 Desktop.ini
 
-# IDE
+# Backend IDE
 .vscode/
 .idea/
 *.swp
@@ -43,35 +43,35 @@ Desktop.ini
 *.sublime-project
 *.sublime-workspace
 
-# Testing
+# Backend Testing
 coverage/
 .nyc_output/
 .jest/
 *.lcov
 
-# Build
+# Backend Build
 dist/
 build/
 out/
 .next/
 
-# Temporary files
+# Backend Temporary files
 tmp/
 temp/
 *.tmp
 .cache/
 
-# Database
+# Backend Database
 *.db
 *.sqlite
 *.sqlite3
 
-# Uploads (if storing locally)
+# Backend Uploads (if storing locally)
 uploads/
 public/uploads/
 files/
 
-# Secrets
+# Backend Secrets
 secrets/
 *.pem
 *.key
@@ -80,18 +80,30 @@ secrets/
 *.crt
 *.cer
 
-# Redis dump
+# Backend Redis dump
 dump.rdb
 
-# PM2
+# Backend PM2
 .pm2/
 ecosystem.config.js
 
-# Docker
+# Backend Docker
 .dockerignore
 docker-compose.override.yml
 
-# Misc
+# Backend Misc
 *.pid
 *.seed
 *.pid.lock
+
+# Frontend folder (if backend is in separate repo, exclude frontend)
+# Uncomment if backend is in a completely separate repository
+# ../src/
+# ../public/
+# ../next.config.mjs
+# ../package.json
+# ../components.json
+# ../postcss.config.mjs
+# ../tailwind.config.js
+# ../tsconfig.json
+# ../jsconfig.json

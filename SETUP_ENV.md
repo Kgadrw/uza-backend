@@ -87,6 +87,8 @@ ALLOWED_FILE_TYPES=image/jpeg,image/png,application/pdf
 
 # App URLs
 FRONTEND_URL=http://localhost:3000
+# For production, set this to your deployed backend URL
+# Example: BACKEND_URL=https://api.uzaempower.com
 BACKEND_URL=http://localhost:5000
 
 # Logging

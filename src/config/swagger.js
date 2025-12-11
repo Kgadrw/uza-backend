@@ -16,14 +16,16 @@ const options = {
       },
     },
     servers: [
-      {
-        url: process.env.BACKEND_URL || 'http://localhost:5000',
-        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
-      },
+      // Production/Deployed server (priority)
       ...(process.env.BACKEND_URL && process.env.BACKEND_URL !== 'http://localhost:5000' ? [{
+        url: process.env.BACKEND_URL,
+        description: 'Deployed/Production server',
+      }] : []),
+      // Local server (fallback or secondary option)
+      {
         url: 'http://localhost:5000',
         description: 'Local development server',
-      }] : []),
+      },
     ],
     components: {
       securitySchemes: {
