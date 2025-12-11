@@ -59,13 +59,23 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Validate input
+    if (!email || !password) {
+      return errorResponse(res, 'Email and password are required', 400);
+    }
+
+    // Find user and explicitly select password field (since it has select: false)
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return errorResponse(res, 'Invalid email or password', 401);
     }
 
     // Check password
+    if (!user.password) {
+      logger.error('User found but password field is missing');
+      return errorResponse(res, 'Invalid email or password', 401);
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return errorResponse(res, 'Invalid email or password', 401);
@@ -77,13 +87,24 @@ const login = async (req, res) => {
     }
 
     // Generate tokens
-    const token = generateToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    let token, refreshToken;
+    try {
+      token = generateToken(user._id);
+      refreshToken = generateRefreshToken(user._id);
+    } catch (tokenError) {
+      logger.error('Token generation error:', tokenError);
+      return errorResponse(res, 'Failed to generate authentication tokens', 500);
+    }
 
     // Update last login and refresh token
-    user.lastLogin = new Date();
-    user.refreshToken = refreshToken;
-    await user.save();
+    try {
+      user.lastLogin = new Date();
+      user.refreshToken = refreshToken;
+      await user.save();
+    } catch (saveError) {
+      logger.error('User save error:', saveError);
+      return errorResponse(res, 'Failed to update user information', 500);
+    }
 
     // Remove password from response
     const userResponse = user.toObject();
