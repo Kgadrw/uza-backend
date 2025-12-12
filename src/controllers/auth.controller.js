@@ -8,21 +8,20 @@ const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
+    // Normalize email (lowercase and trim)
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return errorResponse(res, 'User already exists with this email', 400);
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
+    // Create user - password will be hashed by the pre('save') hook in the User model
     const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
+      name: name.trim(),
+      email: normalizedEmail,
+      password: password, // Let the model's pre('save') hook hash this
       role: role || 'donor',
     });
 
@@ -64,20 +63,25 @@ const login = async (req, res) => {
       return errorResponse(res, 'Email and password are required', 400);
     }
 
+    // Normalize email (lowercase and trim)
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Find user and explicitly select password field (since it has select: false)
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
+      logger.warn(`Login attempt with non-existent email: ${normalizedEmail}`);
       return errorResponse(res, 'Invalid email or password', 401);
     }
 
     // Check password
     if (!user.password) {
-      logger.error('User found but password field is missing');
+      logger.error('User found but password field is missing', { userId: user._id, email: normalizedEmail });
       return errorResponse(res, 'Invalid email or password', 401);
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      logger.warn(`Password mismatch for user: ${normalizedEmail}`);
       return errorResponse(res, 'Invalid email or password', 401);
     }
 
