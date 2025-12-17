@@ -38,6 +38,14 @@ const milestoneSchema = new mongoose.Schema(
       },
       url: String,
       uploadedAt: Date,
+      documentType: {
+        type: String,
+        description: 'Type of document (e.g., Business License, Tax Certificate)',
+      },
+      description: {
+        type: String,
+        description: 'Optional description for the evidence',
+      },
     }],
     number: {
       type: Number,

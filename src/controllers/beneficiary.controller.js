@@ -471,6 +471,130 @@ const uploadEvidence = async (req, res) => {
   }
 };
 
+const uploadEvidenceDocument = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { projectId, milestoneId, documentType, description } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded',
+      });
+    }
+
+    if (!projectId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Project ID is required',
+      });
+    }
+
+    // Verify project belongs to user
+    const project = await Project.findOne({ _id: projectId, beneficiary: userId });
+    if (!project) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project not found or access denied',
+      });
+    }
+
+    let milestone;
+    
+    // If milestoneId is provided, use it; otherwise, get the first available milestone
+    if (milestoneId) {
+      milestone = await Milestone.findOne({ _id: milestoneId, project: projectId });
+      if (!milestone) {
+        return res.status(404).json({
+          success: false,
+          message: 'Milestone not found',
+        });
+      }
+    } else {
+      // Get the first milestone for the project (preferably pending or in_progress)
+      milestone = await Milestone.findOne({ project: projectId })
+        .sort({ number: 1 });
+      
+      if (!milestone) {
+        return res.status(404).json({
+          success: false,
+          message: 'No milestones found for this project. Please create milestones first.',
+        });
+      }
+    }
+
+    // Upload file to Cloudinary
+    const { uploadToCloudinary } = require('../services/cloudinary.service');
+    const result = await uploadToCloudinary(req.file, {
+      folder: 'uzaempower/evidence',
+    });
+
+    // Determine file type
+    let fileType = 'document';
+    if (req.file.mimetype.startsWith('image/')) {
+      fileType = 'image';
+    } else if (req.file.mimetype.startsWith('video/')) {
+      fileType = 'video';
+    }
+
+    // Add evidence to milestone
+    const evidenceEntry = {
+      type: fileType,
+      url: result.secure_url,
+      uploadedAt: new Date(),
+    };
+
+    // Add documentType and description if provided
+    if (documentType) {
+      evidenceEntry.documentType = documentType;
+    }
+    if (description) {
+      evidenceEntry.description = description;
+    }
+
+    milestone.evidence.push(evidenceEntry);
+
+    // Update milestone status if not already submitted
+    if (milestone.status === 'not_started' || milestone.status === 'in_progress') {
+      milestone.status = 'evidence_submitted';
+    }
+
+    await milestone.save();
+
+    return successResponse(
+      res,
+      {
+        evidence: {
+          id: evidenceEntry._id || milestone.evidence[milestone.evidence.length - 1]._id,
+          type: fileType,
+          url: result.secure_url,
+          documentType: documentType || null,
+          description: description || null,
+          uploadedAt: evidenceEntry.uploadedAt,
+          milestoneId: milestone._id,
+          milestoneTitle: milestone.title,
+        },
+        milestone: {
+          id: milestone._id,
+          title: milestone.title,
+          status: milestone.status,
+        },
+        project: {
+          id: project._id,
+          title: project.title,
+        },
+      },
+      'Evidence uploaded successfully'
+    );
+  } catch (error) {
+    logger.error('Upload evidence document error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to upload evidence',
+    });
+  }
+};
+
 const getMissingDocuments = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -572,6 +696,7 @@ module.exports = {
   createFundingRequest,
   getMilestones,
   uploadEvidence,
+  uploadEvidenceDocument,
   getMissingDocuments,
   getReports,
 };

@@ -14,6 +14,7 @@ const {
   createFundingRequest,
   getMilestones,
   uploadEvidence,
+  uploadEvidenceDocument,
   getMissingDocuments,
   getReports,
 } = require('../controllers/beneficiary.controller');
@@ -263,6 +264,72 @@ router.get('/projects/:id/milestones', apiLimiter, getMilestones);
  *         description: Evidence uploaded successfully
  */
 router.post('/milestones/:id/evidence', uploadLimiter, upload.single('file'), uploadEvidence);
+
+/**
+ * @swagger
+ * /api/v1/beneficiary/evidence/upload:
+ *   post:
+ *     summary: Upload evidence document for a project
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *               - projectId
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: PDF, JPG, or PNG file to upload
+ *               projectId:
+ *                 type: string
+ *                 description: ID of the project to upload evidence for
+ *               milestoneId:
+ *                 type: string
+ *                 description: Optional milestone ID. If not provided, uses first milestone
+ *               documentType:
+ *                 type: string
+ *                 description: Type of document (e.g., Business License, Tax Certificate)
+ *               description:
+ *                 type: string
+ *                 description: Optional description for the evidence
+ *     responses:
+ *       200:
+ *         description: Evidence uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     evidence:
+ *                       type: object
+ *                     milestone:
+ *                       type: object
+ *                     project:
+ *                       type: object
+ *       400:
+ *         description: Bad request - missing required fields
+ *       403:
+ *         description: Access denied - project not found or doesn't belong to user
+ *       404:
+ *         description: Milestone not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/evidence/upload', uploadLimiter, upload.single('file'), uploadEvidenceDocument);
 
 /**
  * @swagger
