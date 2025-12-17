@@ -21,6 +21,7 @@ const beneficiaryRoutes = require('./src/routes/beneficiary.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const uploadRoutes = require('./src/routes/upload.routes');
 const exportRoutes = require('./src/routes/export.routes');
+const reportRoutes = require('./src/routes/report.routes');
 
 // Swagger
 const swaggerUi = require('swagger-ui-express');
@@ -127,6 +128,7 @@ app.use(`/api/${API_VERSION}/beneficiary`, beneficiaryRoutes);
 app.use(`/api/${API_VERSION}/admin`, adminRoutes);
 app.use(`/api/${API_VERSION}/upload`, uploadRoutes);
 app.use(`/api/${API_VERSION}/export`, exportRoutes);
+app.use(`/api/${API_VERSION}/reports`, reportRoutes);
 
 // Error handling middleware (must be last)
 app.use(notFound);
