@@ -17,11 +17,11 @@ const register = async (req, res) => {
       return errorResponse(res, 'User already exists with this email', 400);
     }
 
-    // Create user - password will be hashed by the pre('save') hook in the User model
+    // Create user - password will be hashed automatically by model pre-save hook
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
-      password: password, // Let the model's pre('save') hook hash this
+      password: password, // Password will be hashed by model hook
       role: role || 'donor',
     });
 
@@ -29,7 +29,7 @@ const register = async (req, res) => {
     const token = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
-    // Save refresh token
+    // Save refresh token - password is already hashed, so it won't be re-hashed
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -221,9 +221,8 @@ const changePassword = async (req, res) => {
       return errorResponse(res, 'Current password is incorrect', 400);
     }
 
-    // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // Set new password - will be hashed automatically by model pre-save hook
+    user.password = newPassword;
     await user.save();
 
     return successResponse(res, null, 'Password changed successfully');
