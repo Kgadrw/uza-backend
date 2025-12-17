@@ -2,6 +2,7 @@ const Project = require('../models/Project');
 const Pledge = require('../models/Pledge');
 const FundingRequest = require('../models/FundingRequest');
 const Milestone = require('../models/Milestone');
+const Report = require('../models/Report');
 const { successResponse, paginatedResponse } = require('../utils/response');
 const { getPaginationParams, getPaginationMeta } = require('../utils/pagination');
 const { cache } = require('../config/redis');
@@ -737,6 +738,113 @@ const getReports = {
   },
 };
 
+const getBeneficiaryReports = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page, limit, skip, sort } = getPaginationParams(req);
+    const { projectId, status } = req.query;
+
+    let query = { beneficiary: userId };
+    if (projectId) {
+      query.project = projectId;
+    }
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const reports = await Report.find(query)
+      .populate('project', 'title category')
+      .sort(sort || { createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Report.countDocuments(query);
+
+    return paginatedResponse(
+      res,
+      reports,
+      getPaginationMeta(page, limit, total),
+      'Reports retrieved successfully'
+    );
+  } catch (error) {
+    logger.error('Get beneficiary reports error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve reports',
+    });
+  }
+};
+
+const createBeneficiaryReport = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const {
+      title,
+      projectId,
+      startDate,
+      endDate,
+      executiveSummary,
+      keyAchievements,
+      financialSummary,
+      impactMetrics,
+      challenges,
+      nextSteps,
+      media,
+      status = 'submitted',
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !projectId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title and project ID are required',
+      });
+    }
+
+    // Verify project belongs to user
+    const project = await Project.findOne({ _id: projectId, beneficiary: userId });
+    if (!project) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project not found or access denied',
+      });
+    }
+
+    // Create report
+    const report = await Report.create({
+      beneficiary: userId,
+      project: projectId,
+      title,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+      executiveSummary,
+      keyAchievements,
+      financialSummary,
+      impactMetrics,
+      challenges,
+      nextSteps,
+      media: media || [],
+      status,
+    });
+
+    const populatedReport = await Report.findById(report._id)
+      .populate('project', 'title category');
+
+    return successResponse(
+      res,
+      { report: populatedReport },
+      'Report created successfully',
+      201
+    );
+  } catch (error) {
+    logger.error('Create beneficiary report error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to create report',
+    });
+  }
+};
+
 module.exports = {
   getDashboardOverview,
   getProjects,
@@ -753,5 +861,7 @@ module.exports = {
   uploadEvidenceDocument,
   getMissingDocuments,
   getReports,
+  getBeneficiaryReports,
+  createBeneficiaryReport,
 };
 

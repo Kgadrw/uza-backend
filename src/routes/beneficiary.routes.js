@@ -18,6 +18,8 @@ const {
   uploadEvidenceDocument,
   getMissingDocuments,
   getReports,
+  getBeneficiaryReports,
+  createBeneficiaryReport,
 } = require('../controllers/beneficiary.controller');
 
 const router = express.Router();
@@ -408,6 +410,99 @@ router.get('/reports/funding-progress', apiLimiter, getReports.fundingProgress);
  *         description: Project status retrieved successfully
  */
 router.get('/reports/project-status', apiLimiter, getReports.projectStatus);
+
+/**
+ * @swagger
+ * /api/v1/beneficiary/reports/list:
+ *   get:
+ *     summary: Get list of beneficiary reports
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *         description: Filter by project ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [draft, submitted, published, all]
+ *         description: Filter by report status
+ *     responses:
+ *       200:
+ *         description: Reports retrieved successfully
+ */
+router.get('/reports/list', apiLimiter, getBeneficiaryReports);
+
+/**
+ * @swagger
+ * /api/v1/beneficiary/reports:
+ *   post:
+ *     summary: Create a new report
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - projectId
+ *             properties:
+ *               title:
+ *                 type: string
+ *               projectId:
+ *                 type: string
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *               executiveSummary:
+ *                 type: string
+ *               keyAchievements:
+ *                 type: string
+ *               financialSummary:
+ *                 type: object
+ *                 properties:
+ *                   totalSpent:
+ *                     type: number
+ *                   remainingBudget:
+ *                     type: number
+ *               impactMetrics:
+ *                 type: string
+ *               challenges:
+ *                 type: string
+ *               nextSteps:
+ *                 type: string
+ *               media:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     url:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                       enum: [image, video]
+ *                     fileName:
+ *                       type: string
+ *               status:
+ *                 type: string
+ *                 enum: [draft, submitted, published]
+ *                 default: submitted
+ *     responses:
+ *       201:
+ *         description: Report created successfully
+ */
+router.post('/reports', apiLimiter, createBeneficiaryReport);
 
 module.exports = router;
 
