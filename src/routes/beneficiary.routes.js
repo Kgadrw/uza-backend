@@ -1,6 +1,7 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
 const { apiLimiter, uploadLimiter } = require('../middleware/rateLimiter');
+const { upload } = require('../middleware/multer');
 const {
   getDashboardOverview,
   getProjects,
@@ -261,7 +262,7 @@ router.get('/projects/:id/milestones', apiLimiter, getMilestones);
  *       200:
  *         description: Evidence uploaded successfully
  */
-router.post('/milestones/:id/evidence', uploadLimiter, uploadEvidence);
+router.post('/milestones/:id/evidence', uploadLimiter, upload.single('file'), uploadEvidence);
 
 /**
  * @swagger
