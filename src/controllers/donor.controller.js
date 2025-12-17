@@ -70,12 +70,12 @@ const getProjects = async (req, res) => {
     const { page, limit, skip, sort } = getPaginationParams(req);
     const { search, dateFrom, dateTo, pledgeMin, pledgeMax, status } = req.query;
 
-    // Get user's pledges
+    // Get user's pledges to add pledge amounts later
     const pledges = await Pledge.find({ donor: userId });
-    const projectIds = pledges.map((p) => p.project);
+    const pledgedProjectIds = pledges.map((p) => p.project.toString());
 
-    // Build query
-    const query = { _id: { $in: projectIds } };
+    // Build query - get ALL available projects (not just pledged ones)
+    const query = { status: { $in: ['pending', 'active'] } }; // Only show pending or active projects
     if (status && status !== 'all') query.status = status;
     if (search) {
       query.$or = [
@@ -108,12 +108,13 @@ const getProjects = async (req, res) => {
       });
     }
 
-    // Add pledge amount to each project
+    // Add pledge amount to each project (0 if not pledged)
     const projectsWithPledge = filteredProjects.map((project) => {
       const pledge = pledges.find((p) => p.project.toString() === project._id.toString());
       return {
         ...project.toObject(),
         pledgeAmount: pledge ? pledge.amount : 0,
+        hasPledged: pledgedProjectIds.includes(project._id.toString()),
       };
     });
 

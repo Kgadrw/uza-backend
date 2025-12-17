@@ -13,6 +13,7 @@ const {
   getFundingRequests,
   createFundingRequest,
   getMilestones,
+  createMilestone,
   uploadEvidence,
   uploadEvidenceDocument,
   getMissingDocuments,
@@ -232,8 +233,43 @@ router.post('/funding-requests', apiLimiter, createFundingRequest);
  *     responses:
  *       200:
  *         description: Milestones retrieved successfully
+ *   post:
+ *     summary: Create a new milestone for a project
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - targetDate
+ *               - trancheAmount
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               targetDate:
+ *                 type: string
+ *                 format: date-time
+ *               trancheAmount:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Milestone created successfully
  */
 router.get('/projects/:id/milestones', apiLimiter, getMilestones);
+router.post('/projects/:projectId/milestones', apiLimiter, createMilestone);
 
 /**
  * @swagger

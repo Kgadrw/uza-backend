@@ -416,6 +416,59 @@ const getMilestones = async (req, res) => {
   }
 };
 
+const createMilestone = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { title, description, targetDate, trancheAmount } = req.body;
+    const userId = req.user._id;
+
+    // Validate required fields
+    if (!title || !targetDate || !trancheAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, target date, and tranche amount are required',
+      });
+    }
+
+    // Verify project belongs to user
+    const project = await Project.findOne({ _id: projectId, beneficiary: userId });
+    if (!project) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project not found or access denied',
+      });
+    }
+
+    // Get the next milestone number
+    const existingMilestones = await Milestone.find({ project: projectId }).sort({ number: -1 });
+    const nextNumber = existingMilestones.length > 0 ? existingMilestones[0].number + 1 : 1;
+
+    // Create milestone
+    const milestone = await Milestone.create({
+      project: projectId,
+      title,
+      description: description || '',
+      targetDate: new Date(targetDate),
+      trancheAmount: Number(trancheAmount),
+      number: nextNumber,
+      status: 'not_started',
+    });
+
+    return successResponse(
+      res,
+      { milestone },
+      'Milestone created successfully',
+      201
+    );
+  } catch (error) {
+    logger.error('Create milestone error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to create milestone',
+    });
+  }
+};
+
 const uploadEvidence = async (req, res) => {
   try {
     const { id } = req.params;
@@ -695,6 +748,7 @@ module.exports = {
   getFundingRequests,
   createFundingRequest,
   getMilestones,
+  createMilestone,
   uploadEvidence,
   uploadEvidenceDocument,
   getMissingDocuments,
