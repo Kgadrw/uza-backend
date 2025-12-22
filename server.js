@@ -15,6 +15,7 @@ const { notFound } = require('./src/middleware/notFound');
 const logger = require('./src/utils/logger');
 
 // Import routes
+const setupRoutes = require('./src/routes/setup.routes');
 const authRoutes = require('./src/routes/auth.routes');
 const donorRoutes = require('./src/routes/donor.routes');
 const beneficiaryRoutes = require('./src/routes/beneficiary.routes');
@@ -122,6 +123,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 
 // API routes
 const API_VERSION = process.env.API_VERSION || 'v1';
+// Setup routes (no authentication required, but only works if no admin exists)
+app.use(`/api/${API_VERSION}/setup`, setupRoutes);
 app.use(`/api/${API_VERSION}/auth`, authRoutes);
 app.use(`/api/${API_VERSION}/donor`, donorRoutes);
 app.use(`/api/${API_VERSION}/beneficiary`, beneficiaryRoutes);
