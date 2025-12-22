@@ -153,8 +153,19 @@ const updateCatalogue = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, category, description, isActive } = req.body;
-    const imageUrl = req.files?.image?.[0]?.url;
-    const fileUrl = req.files?.file?.[0]?.url;
+    // Check both files and body for URLs (body contains existing URLs when editing without new files)
+    const imageUrl = req.files?.image?.[0]?.url || req.body.image;
+    const fileUrl = req.files?.file?.[0]?.url || req.body.file;
+
+    logger.info('Update catalogue request:', {
+      id,
+      hasImageFile: !!req.files?.image,
+      hasFileFile: !!req.files?.file,
+      imageUrl: !!imageUrl,
+      fileUrl: !!fileUrl,
+      bodyImage: req.body.image,
+      bodyFile: req.body.file,
+    });
 
     const updateData = {};
     if (title) updateData.title = title;
