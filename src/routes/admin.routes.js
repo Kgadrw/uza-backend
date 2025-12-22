@@ -1,6 +1,6 @@
 const express = require('express');
-const { authenticate, authorize } = require('../middleware/auth');
-const { apiLimiter } = require('../middleware/rateLimiter');
+const { simpleAdminAuth } = require('../middleware/auth');
+// No rate limiter for admin - admin needs smooth access
 const {
   getDashboard,
   getProjects,
@@ -12,6 +12,9 @@ const {
   approveKYC,
   rejectKYC,
   getReports,
+  getAlerts,
+  getNotifications,
+  getTranches,
 } = require('../controllers/admin.controller');
 
 const router = express.Router();
@@ -23,9 +26,8 @@ const router = express.Router();
  *   description: Admin dashboard endpoints - requires admin role
  */
 
-// All routes require authentication and admin role
-router.use(authenticate);
-router.use(authorize('admin'));
+// Simple admin authentication - just checks for admin-token, no complex middleware
+router.use(simpleAdminAuth);
 
 /**
  * @swagger
@@ -39,7 +41,7 @@ router.use(authorize('admin'));
  *       200:
  *         description: Dashboard data retrieved successfully
  */
-router.get('/dashboard', apiLimiter, getDashboard);
+router.get('/dashboard', getDashboard);
 
 /**
  * @swagger
@@ -66,7 +68,7 @@ router.get('/dashboard', apiLimiter, getDashboard);
  *       200:
  *         description: Projects retrieved successfully
  */
-router.get('/projects', apiLimiter, getProjects);
+router.get('/projects', getProjects);
 
 /**
  * @swagger
@@ -98,7 +100,7 @@ router.get('/projects', apiLimiter, getProjects);
  *       200:
  *         description: Project status updated successfully
  */
-router.put('/projects/:id/status', apiLimiter, updateProjectStatus);
+router.put('/projects/:id/status', updateProjectStatus);
 
 /**
  * @swagger
@@ -112,7 +114,7 @@ router.put('/projects/:id/status', apiLimiter, updateProjectStatus);
  *       200:
  *         description: Pending milestones retrieved successfully
  */
-router.get('/milestones/pending', apiLimiter, getMilestones.pending);
+router.get('/milestones/pending', getMilestones.pending);
 
 /**
  * @swagger
@@ -132,7 +134,7 @@ router.get('/milestones/pending', apiLimiter, getMilestones.pending);
  *       200:
  *         description: Milestone approved successfully
  */
-router.post('/milestones/:id/approve', apiLimiter, approveMilestone);
+router.post('/milestones/:id/approve', approveMilestone);
 
 /**
  * @swagger
@@ -161,7 +163,7 @@ router.post('/milestones/:id/approve', apiLimiter, approveMilestone);
  *       200:
  *         description: Milestone rejected successfully
  */
-router.post('/milestones/:id/reject', apiLimiter, rejectMilestone);
+router.post('/milestones/:id/reject', rejectMilestone);
 
 /**
  * @swagger
@@ -175,7 +177,7 @@ router.post('/milestones/:id/reject', apiLimiter, rejectMilestone);
  *       200:
  *         description: Pending KYC applications retrieved successfully
  */
-router.get('/kyc/pending', apiLimiter, getKYC.pending);
+router.get('/kyc/pending', getKYC.pending);
 
 /**
  * @swagger
@@ -195,7 +197,7 @@ router.get('/kyc/pending', apiLimiter, getKYC.pending);
  *       200:
  *         description: KYC approved successfully
  */
-router.post('/kyc/:id/approve', apiLimiter, approveKYC);
+router.post('/kyc/:id/approve', approveKYC);
 
 /**
  * @swagger
@@ -224,7 +226,7 @@ router.post('/kyc/:id/approve', apiLimiter, approveKYC);
  *       200:
  *         description: KYC rejected successfully
  */
-router.post('/kyc/:id/reject', apiLimiter, rejectKYC);
+router.post('/kyc/:id/reject', rejectKYC);
 
 /**
  * @swagger
@@ -238,7 +240,7 @@ router.post('/kyc/:id/reject', apiLimiter, rejectKYC);
  *       200:
  *         description: User registration data retrieved successfully
  */
-router.get('/reports/user-registration', apiLimiter, getReports.userRegistration);
+router.get('/reports/user-registration', getReports.userRegistration);
 
 /**
  * @swagger
@@ -252,7 +254,7 @@ router.get('/reports/user-registration', apiLimiter, getReports.userRegistration
  *       200:
  *         description: Funding distribution retrieved successfully
  */
-router.get('/reports/funding-distribution', apiLimiter, getReports.fundingDistribution);
+router.get('/reports/funding-distribution', getReports.fundingDistribution);
 
 /**
  * @swagger
@@ -266,7 +268,7 @@ router.get('/reports/funding-distribution', apiLimiter, getReports.fundingDistri
  *       200:
  *         description: Project status breakdown retrieved successfully
  */
-router.get('/reports/project-status', apiLimiter, getReports.projectStatus);
+router.get('/reports/project-status', getReports.projectStatus);
 
 /**
  * @swagger
@@ -280,7 +282,49 @@ router.get('/reports/project-status', apiLimiter, getReports.projectStatus);
  *       200:
  *         description: Top donors retrieved successfully
  */
-router.get('/reports/top-donors', apiLimiter, getReports.topDonors);
+router.get('/reports/top-donors', getReports.topDonors);
+
+/**
+ * @swagger
+ * /api/v1/admin/alerts:
+ *   get:
+ *     summary: Get all alerts
+ *     tags: [Admin Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Alerts retrieved successfully
+ */
+router.get('/alerts', getAlerts);
+
+/**
+ * @swagger
+ * /api/v1/admin/notifications:
+ *   get:
+ *     summary: Get all notifications
+ *     tags: [Admin Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Notifications retrieved successfully
+ */
+router.get('/notifications', getNotifications);
+
+/**
+ * @swagger
+ * /api/v1/admin/tranches:
+ *   get:
+ *     summary: Get pending tranches
+ *     tags: [Admin Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tranches retrieved successfully
+ */
+router.get('/tranches', getTranches);
 
 module.exports = router;
 

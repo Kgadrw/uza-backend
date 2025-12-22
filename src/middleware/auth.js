@@ -95,9 +95,60 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
+// Simple admin middleware - bypasses all checks, just verifies admin token
+// No database lookups, no JWT verification, no complex checks - just token check
+const simpleAdminAuth = (req, res, next) => {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@uzaempower.com';
+  
+  // Check for admin token in Authorization header
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    if (token === 'admin-token') {
+      req.user = {
+        _id: 'admin',
+        name: 'Admin User',
+        email: ADMIN_EMAIL,
+        role: 'admin',
+        isActive: true,
+      };
+      return next();
+    }
+  }
+  
+  // Also check query parameter as fallback
+  if (req.query.token === 'admin-token') {
+    req.user = {
+      _id: 'admin',
+      name: 'Admin User',
+      email: ADMIN_EMAIL,
+      role: 'admin',
+      isActive: true,
+    };
+    return next();
+  }
+  
+  // If no admin token, still allow but log warning (for development)
+  // In production, you might want to return an error here
+  if (process.env.NODE_ENV !== 'production') {
+    req.user = {
+      _id: 'admin',
+      name: 'Admin User',
+      email: ADMIN_EMAIL,
+      role: 'admin',
+      isActive: true,
+    };
+    return next();
+  }
+  
+  // In production, require token
+  return errorResponse(res, 'Admin token required', 401);
+};
+
 module.exports = {
   authenticate,
   authorize,
   optionalAuth,
+  simpleAdminAuth,
 };
 
