@@ -14,6 +14,20 @@ const authenticate = async (req, res, next) => {
 
     const token = authHeader.substring(7);
 
+    // Simple admin token check - no JWT verification needed
+    if (token === 'admin-token') {
+      const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@uzaempower.com';
+      req.user = {
+        _id: 'admin',
+        name: 'Admin User',
+        email: ADMIN_EMAIL,
+        role: 'admin',
+        isActive: true,
+      };
+      return next();
+    }
+
+    // Regular user JWT verification
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId).select('-password');

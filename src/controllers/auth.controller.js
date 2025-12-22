@@ -66,6 +66,32 @@ const login = async (req, res) => {
     // Normalize email (lowercase and trim)
     const normalizedEmail = email.trim().toLowerCase();
 
+    // Simple admin login - no password hashing, no database check
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@uzaempower.com';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+    if (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      // Return admin user object - no database, no hashing
+      const adminUser = {
+        _id: 'admin',
+        name: 'Admin User',
+        email: ADMIN_EMAIL,
+        role: 'admin',
+        isActive: true,
+      };
+
+      // Simple token for admin
+      const token = 'admin-token';
+      const refreshToken = 'admin-refresh-token';
+
+      return successResponse(res, {
+        user: adminUser,
+        token,
+        refreshToken,
+      }, 'Admin login successful');
+    }
+
+    // Regular user login - check database
     // Find user and explicitly select password field (since it has select: false)
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
