@@ -12,6 +12,7 @@ const {
   getDonors,
   getFundingRequests,
   createFundingRequest,
+  deleteFundingRequest,
   getMilestones,
   createMilestone,
   uploadEvidence,
@@ -217,6 +218,26 @@ router.get('/donors', apiLimiter, getDonors);
  */
 router.get('/funding-requests', apiLimiter, getFundingRequests);
 router.post('/funding-requests', apiLimiter, createFundingRequest);
+
+/**
+ * @swagger
+ * /api/v1/beneficiary/funding-requests/{id}:
+ *   delete:
+ *     summary: Delete a funding request
+ *     tags: [Beneficiary Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Funding request deleted successfully
+ */
+router.delete('/funding-requests/:id', apiLimiter, deleteFundingRequest);
 
 /**
  * @swagger

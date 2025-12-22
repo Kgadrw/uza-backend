@@ -391,6 +391,44 @@ const createFundingRequest = async (req, res) => {
   }
 };
 
+const deleteFundingRequest = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+
+    // Verify funding request belongs to user
+    const fundingRequest = await FundingRequest.findOne({ _id: id, beneficiary: userId });
+    if (!fundingRequest) {
+      return res.status(403).json({
+        success: false,
+        message: 'Funding request not found or access denied',
+      });
+    }
+
+    // Only allow deletion of pending funding requests
+    if (fundingRequest.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only pending funding requests can be deleted',
+      });
+    }
+
+    await FundingRequest.findByIdAndDelete(id);
+
+    return successResponse(
+      res,
+      null,
+      'Funding request deleted successfully'
+    );
+  } catch (error) {
+    logger.error('Delete funding request error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete funding request',
+    });
+  }
+};
+
 const getMilestones = async (req, res) => {
   try {
     const { id } = req.params;
@@ -855,6 +893,7 @@ module.exports = {
   getDonors,
   getFundingRequests,
   createFundingRequest,
+  deleteFundingRequest,
   getMilestones,
   createMilestone,
   uploadEvidence,
