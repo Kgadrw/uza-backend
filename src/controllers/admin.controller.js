@@ -133,6 +133,16 @@ const getMilestones = async (req, res) => {
   }
 };
 
+// Pending milestones handler
+getMilestones.pending = async (req, res) => {
+  try {
+    return successResponse(res, { milestones: [] }, 'Pending milestones retrieved successfully');
+  } catch (error) {
+    logger.error('Get pending milestones error:', error);
+    return errorResponse(res, 'Failed to retrieve pending milestones', 500);
+  }
+};
+
 const approveMilestone = async (req, res) => {
   try {
     return successResponse(res, {}, 'Milestone approved successfully');
@@ -160,6 +170,16 @@ const getKYC = async (req, res) => {
   }
 };
 
+// Pending KYC handler
+getKYC.pending = async (req, res) => {
+  try {
+    return successResponse(res, { kyc: [] }, 'Pending KYC retrieved successfully');
+  } catch (error) {
+    logger.error('Get pending KYC error:', error);
+    return errorResponse(res, 'Failed to retrieve pending KYC', 500);
+  }
+};
+
 const approveKYC = async (req, res) => {
   try {
     return successResponse(res, {}, 'KYC approved successfully');
@@ -184,6 +204,43 @@ const getReports = async (req, res) => {
   } catch (error) {
     logger.error('Get reports error:', error);
     return errorResponse(res, 'Failed to retrieve reports', 500);
+  }
+};
+
+// Report handlers
+getReports.userRegistration = async (req, res) => {
+  try {
+    return successResponse(res, { data: [] }, 'User registration report retrieved successfully');
+  } catch (error) {
+    logger.error('Get user registration report error:', error);
+    return errorResponse(res, 'Failed to retrieve user registration report', 500);
+  }
+};
+
+getReports.fundingDistribution = async (req, res) => {
+  try {
+    return successResponse(res, { data: [] }, 'Funding distribution report retrieved successfully');
+  } catch (error) {
+    logger.error('Get funding distribution report error:', error);
+    return errorResponse(res, 'Failed to retrieve funding distribution report', 500);
+  }
+};
+
+getReports.projectStatus = async (req, res) => {
+  try {
+    return successResponse(res, { data: [] }, 'Project status report retrieved successfully');
+  } catch (error) {
+    logger.error('Get project status report error:', error);
+    return errorResponse(res, 'Failed to retrieve project status report', 500);
+  }
+};
+
+getReports.topDonors = async (req, res) => {
+  try {
+    return successResponse(res, { data: [] }, 'Top donors report retrieved successfully');
+  } catch (error) {
+    logger.error('Get top donors report error:', error);
+    return errorResponse(res, 'Failed to retrieve top donors report', 500);
   }
 };
 
