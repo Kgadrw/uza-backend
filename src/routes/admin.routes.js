@@ -104,6 +104,20 @@ router.put('/projects/:id/status', updateProjectStatus);
 
 /**
  * @swagger
+ * /api/v1/admin/milestones:
+ *   get:
+ *     summary: Get all milestones
+ *     tags: [Admin Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Milestones retrieved successfully
+ */
+router.get('/milestones', getMilestones);
+
+/**
+ * @swagger
  * /api/v1/admin/milestones/pending:
  *   get:
  *     summary: Get pending milestones for review

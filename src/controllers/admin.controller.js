@@ -247,8 +247,14 @@ const getMilestones = async (req, res) => {
     // Format milestones for frontend
     const formattedMilestones = milestones.map(m => ({
       id: m._id,
+      _id: m._id,
       milestone: m.title,
-      project: m.project?.title || 'Unknown Project',
+      title: m.title,
+      project: m.project ? {
+        _id: m.project._id,
+        title: m.project.title || 'Unknown Project'
+      } : null,
+      projectId: m.project?._id || m.project || null,
       status: m.status === 'evidence_submitted' ? 'Evidence Submitted' :
              m.status === 'approved' ? 'Approved' :
              m.status === 'rejected' ? 'Rejected' :

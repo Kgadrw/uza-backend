@@ -16,27 +16,40 @@ const router = express.Router();
 // Middleware to handle file uploads to Cloudinary
 const handleFileUploads = async (req, res, next) => {
   try {
+    // Check if there are actual files to upload (not just URL strings)
     if (req.files) {
       const uploadPromises = [];
 
       if (req.files.image && req.files.image.length > 0) {
         const imageFile = req.files.image[0];
-        uploadPromises.push(
-          uploadToCloudinary(imageFile, {
-            folder: 'uzaempower/catalogues',
-            resource_type: 'image',
-          }).then(result => ({ type: 'image', url: result.secure_url, publicId: result.public_id }))
-        );
+        // Only upload if it's actually a file (has buffer), not a URL string
+        if (imageFile.buffer && imageFile.buffer.length > 0) {
+          uploadPromises.push(
+            uploadToCloudinary(imageFile, {
+              folder: 'uzaempower/catalogues',
+              resource_type: 'image',
+            }).then(result => ({ type: 'image', url: result.secure_url, publicId: result.public_id }))
+          );
+        } else if (imageFile.originalname && typeof imageFile.originalname === 'string' && imageFile.originalname.startsWith('http')) {
+          // It's a URL string, use it directly
+          req.body.image = imageFile.originalname;
+        }
       }
 
       if (req.files.file && req.files.file.length > 0) {
         const pdfFile = req.files.file[0];
-        uploadPromises.push(
-          uploadToCloudinary(pdfFile, {
-            folder: 'uzaempower/catalogues',
-            resource_type: 'auto',
-          }).then(result => ({ type: 'file', url: result.secure_url, publicId: result.public_id }))
-        );
+        // Only upload if it's actually a file (has buffer), not a URL string
+        if (pdfFile.buffer && pdfFile.buffer.length > 0) {
+          uploadPromises.push(
+            uploadToCloudinary(pdfFile, {
+              folder: 'uzaempower/catalogues',
+              resource_type: 'auto',
+            }).then(result => ({ type: 'file', url: result.secure_url, publicId: result.public_id }))
+          );
+        } else if (pdfFile.originalname && typeof pdfFile.originalname === 'string' && pdfFile.originalname.startsWith('http')) {
+          // It's a URL string, use it directly
+          req.body.file = pdfFile.originalname;
+        }
       }
 
       if (uploadPromises.length > 0) {
@@ -52,8 +65,18 @@ const handleFileUploads = async (req, res, next) => {
         });
       }
     }
+    
+    // Also check req.body for URL strings (when sent as form data fields)
+    if (req.body.image && typeof req.body.image === 'string' && req.body.image.startsWith('http')) {
+      // Already a URL, keep it
+    }
+    if (req.body.file && typeof req.body.file === 'string' && req.body.file.startsWith('http')) {
+      // Already a URL, keep it
+    }
+    
     next();
   } catch (error) {
+    console.error('File upload error:', error);
     return res.status(500).json({
       success: false,
       message: 'File upload failed',
