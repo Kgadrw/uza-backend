@@ -285,6 +285,7 @@ getMilestones.pending = async (req, res) => {
       id: m._id,
       milestone: m.title,
       project: m.project?.title || 'Unknown Project',
+      projectId: m.project?._id || null,
       status: 'Evidence Submitted',
       submittedDate: m.completedDate || m.createdAt,
       targetDate: m.targetDate,
@@ -599,6 +600,7 @@ const getAlerts = async (req, res) => {
       id: a._id,
       type: a.title || a.type,
       project: a.project?.title || 'Unknown Project',
+      projectId: a.project?._id || null,
       severity: a.severity === 'high' ? 'High' :
                 a.severity === 'medium' ? 'Medium' : 'Low',
       description: a.description,
