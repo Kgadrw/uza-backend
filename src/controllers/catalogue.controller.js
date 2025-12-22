@@ -110,13 +110,28 @@ const createCatalogue = async (req, res) => {
       return errorResponse(res, 'Catalogue file is required', 400);
     }
 
+    // Handle admin user - admin._id is 'admin' (string), not a valid ObjectId
+    // Set createdBy to null for admin, or validate it's a proper ObjectId
+    let createdBy = null;
+    if (req.user?._id && req.user._id !== 'admin') {
+      // Only set createdBy if it's a valid ObjectId (not the simple admin string)
+      try {
+        const mongoose = require('mongoose');
+        if (mongoose.Types.ObjectId.isValid(req.user._id)) {
+          createdBy = req.user._id;
+        }
+      } catch (e) {
+        // Invalid ObjectId, leave as null
+      }
+    }
+
     const catalogue = await Catalogue.create({
       title,
       category,
       description,
       image: imageUrl,
       file: fileUrl,
-      createdBy: req.user?._id || null,
+      createdBy: createdBy,
     });
 
     const populatedCatalogue = await Catalogue.findById(catalogue._id)
