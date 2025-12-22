@@ -84,19 +84,29 @@ const getCatalogue = async (req, res) => {
 // Create catalogue
 const createCatalogue = async (req, res) => {
   try {
+    logger.info('Create catalogue request:', {
+      body: req.body,
+      hasFiles: !!req.files,
+      filesKeys: req.files ? Object.keys(req.files) : [],
+    });
+
     const { title, category, description } = req.body;
     const imageUrl = req.files?.image?.[0]?.url || req.body.image;
     const fileUrl = req.files?.file?.[0]?.url || req.body.file;
+
+    logger.info('Parsed data:', { title, category, description, imageUrl: !!imageUrl, fileUrl: !!fileUrl });
 
     if (!title || !category || !description) {
       return errorResponse(res, 'Title, category, and description are required', 400);
     }
 
     if (!imageUrl) {
+      logger.warn('Image URL missing:', { hasFiles: !!req.files, imageFile: req.files?.image, bodyImage: req.body.image });
       return errorResponse(res, 'Catalogue image is required', 400);
     }
 
     if (!fileUrl) {
+      logger.warn('File URL missing:', { hasFiles: !!req.files, fileFile: req.files?.file, bodyFile: req.body.file });
       return errorResponse(res, 'Catalogue file is required', 400);
     }
 
@@ -114,8 +124,12 @@ const createCatalogue = async (req, res) => {
 
     return successResponse(res, { catalogue: populatedCatalogue }, 'Catalogue created successfully', 201);
   } catch (error) {
-    logger.error('Create catalogue error:', error);
-    return errorResponse(res, 'Failed to create catalogue', 500);
+    logger.error('Create catalogue error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    return errorResponse(res, `Failed to create catalogue: ${error.message}`, 500);
   }
 };
 
