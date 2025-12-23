@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const Pledge = require('../models/Pledge');
 const Milestone = require('../models/Milestone');
@@ -140,10 +141,30 @@ const getProjectDetails = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
 
-    // Check if user has pledged to this project
-    const pledge = await Pledge.findOne({ donor: userId, project: id });
-    const hasPledged = !!pledge;
+    // Validate project ID
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid project ID',
+      });
+    }
 
+    // Check if user has pledged to this project
+    let pledge = null;
+    let hasPledged = false;
+    try {
+      pledge = await Pledge.findOne({ donor: userId, project: id });
+      hasPledged = !!pledge;
+    } catch (pledgeError) {
+      logger.warn('Error checking pledge:', {
+        projectId: id,
+        userId: userId,
+        error: pledgeError.message
+      });
+      // Continue without pledge check
+    }
+
+    // Fetch project
     const project = await Project.findById(id)
       .populate('beneficiary', 'name email phone');
 
@@ -155,12 +176,23 @@ const getProjectDetails = async (req, res) => {
     }
 
     // Fetch milestones separately (they're not stored in the project model)
-    const milestones = await Milestone.find({ project: id })
-      .sort({ number: 1 });
+    let milestones = [];
+    try {
+      milestones = await Milestone.find({ project: id })
+        .sort({ number: 1, createdAt: 1 })
+        .lean();
+    } catch (milestoneError) {
+      logger.warn('Error fetching milestones for project:', {
+        projectId: id,
+        error: milestoneError.message
+      });
+      // Continue without milestones if there's an error
+      milestones = [];
+    }
 
     // Add pledge information if user has pledged
     const projectData = project.toObject();
-    if (hasPledged) {
+    if (hasPledged && pledge) {
       projectData.pledgeAmount = pledge.amount;
       projectData.hasPledged = true;
     } else {
@@ -177,7 +209,7 @@ const getProjectDetails = async (req, res) => {
       message: error.message,
       stack: error.stack,
       projectId: req.params.id,
-      userId: req.user._id
+      userId: req.user?._id
     });
     return res.status(500).json({
       success: false,
