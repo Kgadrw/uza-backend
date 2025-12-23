@@ -145,8 +145,7 @@ const getProjectDetails = async (req, res) => {
     const hasPledged = !!pledge;
 
     const project = await Project.findById(id)
-      .populate('beneficiary', 'name email phone')
-      .populate('milestones');
+      .populate('beneficiary', 'name email phone');
 
     if (!project) {
       return res.status(404).json({
@@ -154,6 +153,10 @@ const getProjectDetails = async (req, res) => {
         message: 'Project not found',
       });
     }
+
+    // Fetch milestones separately (they're not stored in the project model)
+    const milestones = await Milestone.find({ project: id })
+      .sort({ number: 1 });
 
     // Add pledge information if user has pledged
     const projectData = project.toObject();
@@ -165,9 +168,17 @@ const getProjectDetails = async (req, res) => {
       projectData.hasPledged = false;
     }
 
+    // Add milestones to project data
+    projectData.milestones = milestones;
+
     return successResponse(res, { project: projectData, hasPledged }, 'Project details retrieved successfully');
   } catch (error) {
-    logger.error('Get project details error:', error);
+    logger.error('Get project details error:', {
+      message: error.message,
+      stack: error.stack,
+      projectId: req.params.id,
+      userId: req.user._id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve project details',
