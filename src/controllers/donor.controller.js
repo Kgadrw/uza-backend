@@ -142,18 +142,30 @@ const getProjectDetails = async (req, res) => {
 
     // Check if user has pledged to this project
     const pledge = await Pledge.findOne({ donor: userId, project: id });
-    if (!pledge) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have access to this project',
-      });
-    }
+    const hasPledged = !!pledge;
 
     const project = await Project.findById(id)
       .populate('beneficiary', 'name email phone')
       .populate('milestones');
 
-    return successResponse(res, { project }, 'Project details retrieved successfully');
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found',
+      });
+    }
+
+    // Add pledge information if user has pledged
+    const projectData = project.toObject();
+    if (hasPledged) {
+      projectData.pledgeAmount = pledge.amount;
+      projectData.hasPledged = true;
+    } else {
+      projectData.pledgeAmount = 0;
+      projectData.hasPledged = false;
+    }
+
+    return successResponse(res, { project: projectData, hasPledged }, 'Project details retrieved successfully');
   } catch (error) {
     logger.error('Get project details error:', error);
     return res.status(500).json({
@@ -305,6 +317,106 @@ const getNotifications = async (req, res) => {
   }
 };
 
+const processPayment = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { amount, projectId, description, paymentMethod, cardDetails } = req.body;
+
+    // Validate required fields
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid amount',
+      });
+    }
+
+    // In production, integrate with a payment gateway (Stripe, PayPal, etc.)
+    // For now, we'll simulate a successful payment
+    // TODO: Integrate with actual payment gateway
+    logger.info('Processing payment:', {
+      userId,
+      amount,
+      projectId,
+      paymentMethod,
+      cardLast4: cardDetails?.last4,
+    });
+
+    // Simulate payment processing delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Create transaction record
+    const pledges = await Pledge.find({ donor: userId });
+    const totalPledged = pledges.reduce((sum, pledge) => sum + pledge.amount, 0);
+    const newBalance = totalPledged + amount;
+
+    const transaction = new Transaction({
+      user: userId,
+      project: projectId || null,
+      type: 'Pledge',
+      category: 'Funding',
+      description: description || `Donation of ${amount} RWF`,
+      amount: amount,
+      balance: newBalance,
+      date: new Date(),
+    });
+
+    await transaction.save();
+
+    // If project is specified, create or update pledge
+    if (projectId) {
+      const existingPledge = await Pledge.findOne({
+        donor: userId,
+        project: projectId,
+      });
+
+      if (existingPledge) {
+        existingPledge.amount += amount;
+        await existingPledge.save();
+      } else {
+        const newPledge = new Pledge({
+          donor: userId,
+          project: projectId,
+          amount: amount,
+          status: 'active',
+        });
+        await newPledge.save();
+      }
+
+      // Update project total funded
+      const project = await Project.findById(projectId);
+      if (project) {
+        project.totalFunded = (project.totalFunded || 0) + amount;
+        await project.save();
+      }
+    }
+
+    // Clear cache
+    await cache.del(`donor:dashboard:${userId}`);
+    await cache.del(`donor:ledger:${userId}`);
+
+    logger.info('Payment processed successfully:', transaction._id);
+
+    return successResponse(
+      res,
+      {
+        transaction: {
+          id: transaction._id,
+          amount: transaction.amount,
+          balance: transaction.balance,
+          date: transaction.date,
+        },
+      },
+      'Payment processed successfully'
+    );
+  } catch (error) {
+    logger.error('Process payment error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process payment',
+    });
+  }
+};
+
 module.exports = {
   getDashboardOverview,
   getProjects,
@@ -313,5 +425,6 @@ module.exports = {
   getLedger,
   getAlerts,
   getNotifications,
+  processPayment,
 };
 

@@ -9,6 +9,7 @@ const {
   getLedger,
   getAlerts,
   getNotifications,
+  processPayment,
 } = require('../controllers/donor.controller');
 
 const router = express.Router();
@@ -221,6 +222,42 @@ router.get('/alerts', apiLimiter, getAlerts);
  *         description: Notifications retrieved successfully
  */
 router.get('/notifications', apiLimiter, getNotifications);
+
+/**
+ * @swagger
+ * /api/v1/donor/payments:
+ *   post:
+ *     summary: Process a payment/transaction
+ *     tags: [Donor Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *               projectId:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [card, momo, bank]
+ *     responses:
+ *       200:
+ *         description: Payment processed successfully
+ *       400:
+ *         description: Invalid payment data
+ *       500:
+ *         description: Payment processing failed
+ */
+router.post('/payments', apiLimiter, processPayment);
 
 module.exports = router;
 
